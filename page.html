@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+
+<script type="module">
+	import main from "./main.js"
+
+	let changed = false
+	let preview_win = null
+	const toHtml = (text) => {
+		try {
+			return main(text)
+		} catch (err) {
+			console.error(err)
+			return `<h1>〚エラー〛</h1><div>${err.message}</div>`
+		}
+	}
+	const update = () => {
+		if (changed) {
+			changed = false
+			const html = toHtml(src.value)
+			result.value = html
+			if (preview_win?.closed === false) {
+				preview_win.postMessage({ html })
+			}
+		}
+	}
+	src.onchange = () => {
+		update()
+	}
+	src.oninput = () => {
+		changed = true
+	}
+	result.onfocus = () => {
+		result.select()
+	}
+	setInterval(() => {
+		update()
+	}, 1000)
+	preview.onclick = () => {
+		if (preview_win) preview_win.close()
+		preview_win = window.open("preview.html")
+	}
+</script>
+
+<style>
+	body {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 10px;
+		width: 100vw;
+		height: 100vh;
+		background: linear-gradient(45deg, #cba5c1, #bed1db, #a9c799, #f3dabb);
+	}
+
+	#root {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-flow: column;
+		gap: 10px;
+	}
+
+	.areas {
+		display: flex;
+		gap: 10px;
+		flex: 1;
+	}
+
+	.btns {
+		display: flex;
+		gap: 10px;
+		justify-content: flex-end;
+
+		button {
+			padding: 4px 8px;
+		}
+	}
+
+	textarea {
+		resize: none;
+		outline: none;
+		padding: 8px;
+		font-size: inherit;
+		font-family: meiryo;
+		font-size: 14px;
+		flex: 1 0 0;
+		opacity: .8;
+	}
+
+	#src {
+		background: #f0ffff;
+	}
+
+	#result {
+		background: #f0f0f0;
+	}
+</style>
+
+<div id="root">
+	<div class="areas">
+		<textarea id="src"></textarea>
+		<textarea id="result" readonly></textarea>
+	</div>
+	<div class="btns">
+		<button id="preview">Open Preview</button>
+	</div>
+</div>

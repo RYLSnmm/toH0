@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+
+<script type="module">
+	window.onmessage = (event) => {
+		div.innerHTML = event.data.html ?? ""
+	}	
+</script>
+
+<div id="div">
+	ここが更新されます<br/>
+	この HTML を書き換えてプレビューに使うページデザインを変更できます
+</div>
