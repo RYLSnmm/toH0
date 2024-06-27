@@ -3,8 +3,11 @@
 <script type="module">
 	import main from "./main.js"
 
-	let changed = false
-	let preview_win = null
+	const state = {
+		changed: false,
+		preview_win: null,
+		preview_url: null,
+	}
 	const toHtml = (text) => {
 		try {
 			return main(text)
@@ -14,12 +17,12 @@
 		}
 	}
 	const update = () => {
-		if (changed) {
-			changed = false
+		if (state.changed) {
+			state.changed = false
 			const html = toHtml(src.value)
 			result.value = html
-			if (preview_win?.closed === false) {
-				preview_win.postMessage({ html })
+			if (state.preview_win?.closed === false) {
+				state.preview_win.postMessage({ html })
 			}
 		}
 	}
@@ -27,7 +30,7 @@
 		update()
 	}
 	src.oninput = () => {
-		changed = true
+		state.changed = true
 	}
 	result.onfocus = () => {
 		result.select()
@@ -35,9 +38,29 @@
 	setInterval(() => {
 		update()
 	}, 1000)
-	preview.onclick = () => {
-		if (preview_win) preview_win.close()
-		preview_win = window.open("preview.html")
+	config_preview.onclick = () => {
+		config_dialog.showModal()
+		preview_page.value = localStorage.preview_page || ""
+	}
+	dialog_ok.onclick = () => {
+		localStorage.preview_page = preview_page.value
+		config_dialog.close()
+	}
+	dialog_cancel.onclick = () => {
+		config_dialog.close()
+	}
+	open_preview.onclick = () => {
+		if (state.preview_win) state.preview_win.close()
+		if (state.preview_url) URL.revokeObjectURL(state.preview_url)
+
+		const preview_page = localStorage.preview_page
+		state.preview_url = !preview_page
+			? "preview.html"
+			: preview_page.match(/^\s*https?\:\/\//)
+				? preview_page.trim()
+				: URL.createObjectURL(new Blob([preview_page], { type: "text/html" }))
+
+		state.preview_win = window.open(state.preview_url)
 	}
 </script>
 
@@ -59,10 +82,24 @@
 		gap: 10px;
 	}
 
+	textarea {
+		resize: none;
+		outline: none;
+		padding: 8px;
+		font-size: inherit;
+		font-family: meiryo;
+		font-size: 14px;
+	}
+
 	.areas {
 		display: flex;
 		gap: 10px;
 		flex: 1;
+
+		textarea {
+			flex: 1 0 0;
+			opacity: .8;
+		}
 	}
 
 	.btns {
@@ -75,23 +112,22 @@
 		}
 	}
 
-	textarea {
-		resize: none;
-		outline: none;
-		padding: 8px;
-		font-size: inherit;
-		font-family: meiryo;
-		font-size: 14px;
-		flex: 1 0 0;
-		opacity: .8;
-	}
-
 	#src {
 		background: #f0ffff;
 	}
 
 	#result {
 		background: #f0f0f0;
+	}
+
+	#config_dialog {
+		box-shadow: 0 0 12px 3px #0003;
+		border: none;
+
+		textarea {
+			width: 60vw;
+			height: 60vh;
+		}
 	}
 </style>
 
@@ -101,6 +137,14 @@
 		<textarea id="result" readonly></textarea>
 	</div>
 	<div class="btns">
-		<button id="preview">Open Preview</button>
+		<button id="config_preview">Config Preview</button>
+		<button id="open_preview">Open Preview</button>
 	</div>
 </div>
+<dialog id="config_dialog">
+	<textarea id="preview_page" placeholder="URL or HTML"></textarea>
+	<div class="btns">
+		<button id="dialog_ok">OK</button>
+		<button id="dialog_cancel">Cancel</button>
+	</div>
+</dialog>
