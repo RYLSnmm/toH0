@@ -50,9 +50,12 @@ const update = async () => {
 	console.log("updated")
 }
 
-const watcher = Deno.watchFs(target)
-for await (const event of watcher) {
-	if (event.kind === "modify") update()
+const watch = async () => {
+	const watcher = Deno.watchFs(target)
+	for await (const event of watcher) {
+		if (event.kind === "modify") update()
+	}
 }
 
+watch()
 update()
