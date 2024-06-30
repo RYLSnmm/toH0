@@ -1,12 +1,43 @@
 <!DOCTYPE html>
+<meta charset="utf-8" />
 
 <script type="module">
-	window.onmessage = (event) => {
-		div.innerHTML = event.data.html ?? ""
-	}	
+	const enableOnMessage = () => {
+		window.onmessage = (event) => {
+			div.innerHTML = event.data.html ?? ""
+		}
+	}
+
+	const enableWebSocket = () => {
+		const url = new URL(location)
+		url.protocol = "ws:"
+		const ws = new WebSocket(url)
+
+		ws.onopen = () => {
+			console.log("conn")
+		}
+
+		ws.onclose = () => {
+			console.log("disconn")
+		}
+
+		ws.onmessage = (event) => {
+			const data = JSON.parse(event.data)
+			if (data.type === "changed") {
+				div.innerHTML = data.body ?? ""
+			}
+		}
+
+		ws.onerror = (event) => {
+			console.error("err:", event.data)
+		}
+	}
+
+	enableOnMessage()
+	enableWebSocket()
 </script>
 
 <div id="div">
-	ここが更新されます<br/>
+	ここが更新されます<br />
 	この HTML を書き換えてプレビューに使うページデザインを変更できます
 </div>
