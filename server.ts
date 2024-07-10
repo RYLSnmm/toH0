@@ -1,4 +1,5 @@
-import { fromFileUrl } from "https://deno.land/std@0.216.0/path/mod.ts"
+import { fromFileUrl } from "https://deno.land/std@0.224.0/path/mod.ts"
+import { debounce } from "https://deno.land/std@0.224.0/async/debounce.ts"
 import toh0 from "./main.js"
 
 const target = Deno.args[0] || fromFileUrl(import.meta.resolve("./source.txt"))
@@ -45,15 +46,22 @@ const _server = Deno.serve(
 
 const update = async () => {
 	const source = await Deno.readTextFile(target)
-	body = toh0(source)
+	try {
+		body = toh0(source)
+	} catch (err) {
+		console.log(err)
+		body = `<h1>〚エラー〛</h1><div>${err.message}</div>`
+	}
 	et.dispatchEvent(new Event("changed"))
 	console.log("updated")
 }
 
+const debouncedUpdate = debounce(update, 500)
+
 const watch = async () => {
 	const watcher = Deno.watchFs(target)
 	for await (const event of watcher) {
-		if (event.kind === "modify") update()
+		if (event.kind === "modify") debouncedUpdate()
 	}
 }
 
